@@ -1,6 +1,7 @@
 FROM golang:1.24.1-alpine
 
-RUN go install github.com/mitranim/gow@latest
+RUN go install github.com/mitranim/gow@latest && \
+    go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
 # RUN apk add --no-cache postgresql-client
 
 # RUN chmod +x wait-for-postgres.sh
