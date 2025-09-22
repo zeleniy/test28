@@ -1,0 +1,56 @@
+# https://taskfile.dev
+
+version: '3'
+
+vars:
+  GREETING: Hello, World!
+  MIGRATIONS_PATH: db/migrations
+
+dotenv: ['.env']
+
+tasks:
+  default:
+    silent: true
+    cmds:
+      - |
+        echo "🚀 Go Test Assignment: Subscription Service API"
+        echo "   REST service for managing user subscriptions"
+        echo ""
+        echo "📖 Available commands: task --list"
+        echo "   Documentation: README.md"
+
+  env:
+    desc: "Print .env file variables"
+    silent: true
+    cmds:
+      - echo DB_PORT={{.DB_PORT}}
+      - echo DB_HOST={{.DB_HOST}}
+      - echo DB_USER={{.DB_USER}}
+      - echo DB_PASS={{.DB_PASS}}
+      - echo DB_NAME={{.DB_NAME}}
+
+  docker:up:
+    desc: "Run docker compose fleet"
+    aliases: [serve]
+    cmds:
+      - docker compose up
+
+  app:sh:
+    desc: "Run application server shell"
+    cmds:
+      - docker compose exec -it app sh
+
+  migrate:up:
+    desc: "Apply migrations"
+    cmds:
+      - migrate -database 'postgres://{{.DB_USER}}:{{.DB_PASS}}@{{.DB_HOST}}:{{.DB_PORT}}/{{.DB_NAME}}?sslmode=disable' -path {{.MIGRATIONS_PATH}} up {{.CLI_ARGS}}
+
+  migrate:down:
+    desc: "Rollback migrations" 
+    cmds:
+      - migrate -database 'postgres://{{.DB_USER}}:{{.DB_PASS}}@{{.DB_HOST}}:{{.DB_PORT}}/{{.DB_NAME}}?sslmode=disable' -path {{.MIGRATIONS_PATH}} down {{.CLI_ARGS}}
+
+  migrate:version:
+    desc: "Show current migration version"
+    cmds:
+      - migrate -database 'postgres://{{.DB_USER}}:{{.DB_PASS}}@{{.DB_HOST}}:{{.DB_PORT}}/{{.DB_NAME}}?sslmode=disable' -path {{.MIGRATIONS_PATH}} version {{.CLI_ARGS}}
