@@ -31,14 +31,47 @@ tasks:
 
   docker:up:
     desc: "Run docker compose fleet"
-    aliases: [serve]
+    aliases: [up, serve]
     cmds:
-      - docker compose up
+      - docker compose up {{.CLI_ARGS}}
 
   app:sh:
     desc: "Run application server shell"
+    aliases: [sh]
     cmds:
       - docker compose exec -it app sh
+
+  app:test:
+    desc: "Run application test"
+    aliases: [test]
+    cmds:
+      - go test ./models
+
+  boiler:config:
+    desc: "Generate SQLBoiler config file"
+    cmds:
+      - |
+        cat > sqlboiler.toml << EOF
+        output   = "models"
+        wipe     = true
+        no-tests = false
+        add-enum-types = true
+
+        [psql]
+          dbname = "{{.DB_NAME}}"
+          host   = "{{.DB_HOST}}"
+          port   = {{.DB_PORT}}
+          user   = "{{.DB_USER}}"
+          pass   = "{{.DB_PASS}}"
+          sslmode = "disable"
+          blacklist = ["schema_migrations"]
+        EOF
+
+  boiler:models:
+    desc: "Generate SQLBoiler models"
+    deps: [boiler:config]
+    cmds:
+      - sqlboiler psql
 
   migrate:up:
     desc: "Apply migrations"

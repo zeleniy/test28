@@ -12,7 +12,7 @@ services:
     command: ["gow", "run", "."]
     working_dir: /app
     volumes:
-      - ./:/app:ro
+      - ./:/app
     # depends_on:
     #   postgres:
     #     condition: service_healthy
