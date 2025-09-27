@@ -9,6 +9,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/aarondl/sqlboiler/v4/boil"
 	"github.com/gin-gonic/gin"
 	"github.com/go-faker/faker/v4"
 	"github.com/stretchr/testify/assert"
@@ -17,14 +18,20 @@ import (
 	"github.com/zeleniy/test28/factory"
 )
 
+var (
+	ginEngine *gin.Engine
+	db        boil.ContextExecutor
+	ctx       context.Context
+)
+
+func init() {
+
+	ginEngine = bootstrap.SetUpApp(gin.TestMode, os.Getenv("DB_TEST_URL"))
+	db = boil.GetContextDB()
+	ctx = context.Background()
+}
+
 func TestGetSubscriptions(t *testing.T) {
-
-	r := bootstrap.SetUpGin(gin.TestMode)
-
-	db, err := bootstrap.SetUpDb(os.Getenv("DB_TEST_URL"))
-	assert.NoError(t, err, "Failed to connect to database")
-
-	ctx := context.Background()
 
 	user, err := factory.CreateAndInsertUser(ctx, db,
 		factory.UserLogin(faker.Username()),
@@ -46,7 +53,7 @@ func TestGetSubscriptions(t *testing.T) {
 
 	w := httptest.NewRecorder()
 
-	r.ServeHTTP(w, req)
+	ginEngine.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusOK, w.Code, "Expected status code %d, got %d", http.StatusOK, w.Code)
 
@@ -76,12 +83,6 @@ func TestGetSubscriptions(t *testing.T) {
 
 func TestCreateSubscription(t *testing.T) {
 
-	r := bootstrap.SetUpGin(gin.TestMode)
-	db, err := bootstrap.SetUpDb(os.Getenv("DB_TEST_URL"))
-	assert.NoError(t, err, "Failed to connect to database")
-
-	ctx := context.Background()
-
 	user, err := factory.CreateAndInsertUser(ctx, db,
 		factory.UserLogin(faker.Username()),
 		factory.UserPasswordHash(faker.Password()),
@@ -106,7 +107,7 @@ func TestCreateSubscription(t *testing.T) {
 
 	w := httptest.NewRecorder()
 
-	r.ServeHTTP(w, req)
+	ginEngine.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusOK, w.Code, "Expected status code %d, got %d", http.StatusOK, w.Code)
 

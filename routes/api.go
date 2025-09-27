@@ -1,6 +1,8 @@
 package routes
 
 import (
+	"net/http"
+
 	"github.com/gin-gonic/gin"
 	"github.com/zeleniy/test28/http/controllers"
 )
@@ -8,6 +10,10 @@ import (
 func SetupRoutes(r *gin.Engine) {
 
 	subscriptionCtrl := &controllers.SubscriptionController{}
+
+	r.GET("/ping", func(c *gin.Context) {
+		c.String(http.StatusOK, "pong")
+	})
 
 	r.GET("/subscriptions", subscriptionCtrl.GetSubscriptions)
 	r.POST("/subscriptions", subscriptionCtrl.CreateSubscription)
