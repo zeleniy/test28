@@ -2,24 +2,34 @@ package bootstrap
 
 import (
 	"database/sql"
+	"sync"
 
 	"github.com/aarondl/sqlboiler/v4/boil"
 	_ "github.com/lib/pq"
 )
 
+var (
+	db   *sql.DB
+	once sync.Once
+)
+
 func SetUpDb(dsn string) (*sql.DB, error) {
 
-	db, err := sql.Open("postgres", dsn)
+	var err error
 
-	if err != nil {
-		return nil, err
-	}
+	once.Do(func() {
 
-	// if err := db.Ping(); err != nil {
-	// 	return nil, err
-	// }
+		db, err = sql.Open("postgres", dsn)
+		if err != nil {
+			return
+		}
 
-	boil.SetDB(db)
+		// if err := db.Ping(); err != nil {
+		// 	return nil, err
+		// }
 
-	return db, nil
+		boil.SetDB(db)
+	})
+
+	return db, err
 }
