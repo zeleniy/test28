@@ -45,10 +45,23 @@ tasks:
     desc: "Run application test"
     aliases: [test]
     cmds:
-      - go test ./models
+      - go test ./models/ ./tests/... {{.CLI_ARGS}}
+
+  app:testsum:
+    desc: "Run application test"
+    aliases: [testsum]
+    cmds:
+      - gotestsum ./models/ ./tests/... {{.CLI_ARGS}}
+
+  pg:sh:
+    desc: "Run PostreSQL shell"
+    aliases: [pg]
+    cmds:
+      - docker compose exec -it postgres psql -U postgres
 
   boiler:config:
     desc: "Generate SQLBoiler config file"
+    silent: true
     cmds:
       - |
         cat > sqlboiler.toml << EOF
@@ -73,6 +86,16 @@ tasks:
     cmds:
       - sqlboiler psql
 
+  boiler:factories:
+    desc: "Generate SQLBoiler factories"
+    deps: [boiler:config]
+    cmds:
+      - boilingfactory psql --sqlboiler-models github.com/zeleniy/test28/models --output factory --wipe
+
+  boiler:code:
+    desc: "Generate ORM entities"
+    deps: [boiler:models, boiler:factories]
+
   migrate:up:
     desc: "Apply migrations"
     cmds:
@@ -87,3 +110,18 @@ tasks:
     desc: "Show current migration version"
     cmds:
       - migrate -database 'postgres://{{.DB_USER}}:{{.DB_PASS}}@{{.DB_HOST}}:{{.DB_PORT}}/{{.DB_NAME}}?sslmode=disable' -path {{.MIGRATIONS_PATH}} version {{.CLI_ARGS}}
+
+  migrate:test:up:
+    desc: "Apply migrations"
+    cmds:
+      - migrate -database 'postgres://{{.DB_USER}}:{{.DB_PASS}}@{{.DB_HOST}}:{{.DB_PORT}}/{{.DB_TEST_NAME}}?sslmode=disable' -path {{.MIGRATIONS_PATH}} up {{.CLI_ARGS}}
+
+  migrate:test:down:
+    desc: "Rollback migrations" 
+    cmds:
+      - migrate -database 'postgres://{{.DB_USER}}:{{.DB_PASS}}@{{.DB_HOST}}:{{.DB_PORT}}/{{.DB_TEST_NAME}}?sslmode=disable' -path {{.MIGRATIONS_PATH}} down {{.CLI_ARGS}}
+
+  migrate:test:version:
+    desc: "Show current migration version"
+    cmds:
+      - migrate -database 'postgres://{{.DB_USER}}:{{.DB_PASS}}@{{.DB_HOST}}:{{.DB_PORT}}/{{.DB_TEST_NAME}}?sslmode=disable' -path {{.MIGRATIONS_PATH}} version {{.CLI_ARGS}}
