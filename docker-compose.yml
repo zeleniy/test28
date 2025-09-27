@@ -9,6 +9,7 @@ services:
     - .env
     environment:
       - DB_URL=postgres://${DB_USER}:${DB_PASS}@${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=disable
+      - DB_TEST_URL=postgres://${DB_USER}:${DB_PASS}@${DB_HOST}:${DB_PORT}/${DB_TEST_NAME}?sslmode=disable
     command: ["gow", "run", "."]
     working_dir: /app
     volumes:
@@ -28,6 +29,7 @@ services:
       - "5432:5432"
     volumes:
       - ./postgresql/data:/var/lib/postgresql/data
+      - ./postgresql/init-test-db.sql:/docker-entrypoint-initdb.d/init-test-db.sql
     # healthcheck:
     #   test: ["CMD-SHELL", "pg_isready -U postgres"]
     #   interval: 5s
