@@ -92,9 +92,22 @@ tasks:
     cmds:
       - boilingfactory psql --sqlboiler-models github.com/zeleniy/test28/models --output factory --wipe
 
+  boiler:seeders:
+    desc: "Generate SQLBoiler factories"
+    deps: [boiler:config]
+    cmds:
+      - boilingseed psql --sqlboiler-models github.com/zeleniy/test28/models --output database/seeds --wipe
+
   boiler:code:
     desc: "Generate ORM entities"
-    deps: [boiler:models, boiler:factories]
+    deps: [boiler:models, boiler:factories, boiler:seeders]
+
+  db:seed:
+    desc: "Seed database with some data"
+    deps: [boiler:code]
+    aliases: [seed]
+    cmds:
+      - go run cmd/seed/main.go
 
   migrate:up:
     desc: "Apply migrations"
