@@ -28,6 +28,8 @@ tasks:
       - echo DB_USER={{.DB_USER}}
       - echo DB_PASS={{.DB_PASS}}
       - echo DB_NAME={{.DB_NAME}}
+      - echo DB_URL={{.DB_URL}}
+      - echo DB_TEST_URL={{.DB_TEST_URL}}
 
   docker:up:
     desc: "Run docker compose fleet"
@@ -43,12 +45,14 @@ tasks:
 
   app:test:
     desc: "Run application test"
+    deps: [migrate:test:fresh]
     aliases: [test]
     cmds:
       - go test ./models/ ./tests/... {{.CLI_ARGS}}
 
   app:testsum:
     desc: "Run application test"
+    deps: [migrate:test:fresh]
     aliases: [testsum]
     cmds:
       - gotestsum ./models/ ./tests/... {{.CLI_ARGS}}
@@ -109,32 +113,54 @@ tasks:
     cmds:
       - go run cmd/seed/main.go
 
+  db:test:wipe:
+    desc: "Drop all tables"
+    cmds:
+      - psql {{.DB_TEST_URL}} -c "
+          DO \$\$ 
+          DECLARE 
+              r RECORD;
+          BEGIN
+              FOR r IN (SELECT tablename FROM pg_tables WHERE schemaname = 'public') 
+              LOOP
+                  EXECUTE 'DROP TABLE IF EXISTS ' || quote_ident(r.tablename) || ' CASCADE';
+              END LOOP;
+          END \$\$;"
+
   migrate:up:
     desc: "Apply migrations"
     cmds:
-      - migrate -database 'postgres://{{.DB_USER}}:{{.DB_PASS}}@{{.DB_HOST}}:{{.DB_PORT}}/{{.DB_NAME}}?sslmode=disable' -path {{.MIGRATIONS_PATH}} up {{.CLI_ARGS}}
+      - migrate -database '{{.DB_URL}}' -path {{.MIGRATIONS_PATH}} up {{.CLI_ARGS}}
 
   migrate:down:
     desc: "Rollback migrations" 
     cmds:
-      - migrate -database 'postgres://{{.DB_USER}}:{{.DB_PASS}}@{{.DB_HOST}}:{{.DB_PORT}}/{{.DB_NAME}}?sslmode=disable' -path {{.MIGRATIONS_PATH}} down {{.CLI_ARGS}}
+      - migrate -database '{{.DB_URL}}' -path {{.MIGRATIONS_PATH}} down {{.CLI_ARGS}}
 
   migrate:version:
     desc: "Show current migration version"
     cmds:
-      - migrate -database 'postgres://{{.DB_USER}}:{{.DB_PASS}}@{{.DB_HOST}}:{{.DB_PORT}}/{{.DB_NAME}}?sslmode=disable' -path {{.MIGRATIONS_PATH}} version {{.CLI_ARGS}}
+      - migrate -database '{{.DB_URL}}' -path {{.MIGRATIONS_PATH}} version {{.CLI_ARGS}}
 
   migrate:test:up:
     desc: "Apply migrations"
     cmds:
-      - migrate -database 'postgres://{{.DB_USER}}:{{.DB_PASS}}@{{.DB_HOST}}:{{.DB_PORT}}/{{.DB_TEST_NAME}}?sslmode=disable' -path {{.MIGRATIONS_PATH}} up {{.CLI_ARGS}}
+      - migrate -database '{{.DB_TEST_URL}}' -path {{.MIGRATIONS_PATH}} up {{.CLI_ARGS}}
 
   migrate:test:down:
     desc: "Rollback migrations" 
     cmds:
-      - migrate -database 'postgres://{{.DB_USER}}:{{.DB_PASS}}@{{.DB_HOST}}:{{.DB_PORT}}/{{.DB_TEST_NAME}}?sslmode=disable' -path {{.MIGRATIONS_PATH}} down {{.CLI_ARGS}}
+      - migrate -database '{{.DB_TEST_URL}}' -path {{.MIGRATIONS_PATH}} down {{.CLI_ARGS}}
 
   migrate:test:version:
     desc: "Show current migration version"
     cmds:
-      - migrate -database 'postgres://{{.DB_USER}}:{{.DB_PASS}}@{{.DB_HOST}}:{{.DB_PORT}}/{{.DB_TEST_NAME}}?sslmode=disable' -path {{.MIGRATIONS_PATH}} version {{.CLI_ARGS}}
+      - migrate -database '{{.DB_TEST_URL}}' -path {{.MIGRATIONS_PATH}} version {{.CLI_ARGS}}
+
+  migrate:test:fresh:
+    desc: "Drop all tables and re-run all migrations"
+    deps: [db:test:wipe, migrate:test:up]
+
+  migrate:test:refresh:
+    desc: "Reset and re-run all migrations"
+    deps: [db:test:down, migrate:test:up]
