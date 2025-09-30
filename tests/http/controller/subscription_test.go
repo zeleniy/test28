@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"strconv"
 	"testing"
 
 	"github.com/aarondl/sqlboiler/v4/boil"
@@ -129,6 +130,53 @@ func TestCreateSubscription(t *testing.T) {
 	assert.IsType(t, "", subscription.Get("start_date").Value())
 	assert.Nil(t, subscription.Get("end_date").Value())
 	assert.IsType(t, "", subscription.Get("created_at").Value())
+}
+
+func TestReadSubscription(t *testing.T) {
+
+	user, err := factory.CreateAndInsertUser(ctx, db,
+		factory.UserLogin(faker.Username()),
+		factory.UserPasswordHash(faker.Password()),
+	)
+
+	assert.NoError(t, err, "Failed to create user")
+
+	subscription, err := factory.CreateAndInsertSubscription(ctx, db,
+		factory.SubscriptionUserID(user.ID),
+		factory.SubscriptionServiceName("Ivi"),
+		factory.SubscriptionPrice(100),
+	)
+
+	assert.NoError(t, err, "Failed to create subscription")
+
+	req, err := http.NewRequest(http.MethodGet, "/subscriptions/"+strconv.Itoa(subscription.ID), nil)
+	assert.NoError(t, err, "Failed to create request")
+
+	w := httptest.NewRecorder()
+
+	ginEngine.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusOK, w.Code, "Expected status code %d, got %d", http.StatusOK, w.Code)
+
+	json := gjson.Parse(w.Body.String())
+
+	if !json.IsObject() && !json.IsArray() {
+		assert.True(t, json.Get("data").Exists(), "Response is not valid JSON")
+	}
+
+	assertResponseStructure(t, json)
+
+	subscriptionJson := json.Get("data.subscription")
+	assert.True(t, subscriptionJson.Exists())
+	assert.True(t, subscriptionJson.IsObject())
+
+	assert.Equal(t, int64(subscription.ID), subscriptionJson.Get("id").Int())
+	assert.Equal(t, int64(subscription.UserID), subscriptionJson.Get("user_id").Int())
+	assert.Equal(t, "Ivi", subscriptionJson.Get("service_name").Value())
+	assert.Equal(t, int64(100), subscriptionJson.Get("price").Int())
+	assert.IsType(t, "", subscriptionJson.Get("start_date").Value())
+	assert.Nil(t, subscriptionJson.Get("end_date").Value())
+	assert.IsType(t, "", subscriptionJson.Get("created_at").Value())
 }
 
 func assertResponseStructure(t *testing.T, json gjson.Result) {
