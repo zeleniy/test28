@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"math/rand"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -34,20 +35,23 @@ func init() {
 
 func TestGetSubscriptions(t *testing.T) {
 
-	user, err := factory.CreateAndInsertUser(ctx, db,
-		factory.UserLogin(faker.Username()),
-		factory.UserPasswordHash(faker.Password()),
+	users, err := factory.CreateAndInsertUsers(ctx, db, 3,
+		factory.UserLoginFunc(func() (string, error) { return faker.Username(), nil }),
+		factory.UserPasswordHashFunc(func() (string, error) { return faker.Password(), nil }),
 	)
+	assert.NoError(t, err, "Failed to create users")
 
-	assert.NoError(t, err, "Failed to create user")
-
-	_, err = factory.CreateSubscription(
-		factory.SubscriptionUserID(user.ID),
-		factory.SubscriptionServiceName("test-service"),
-		factory.SubscriptionPrice(1000),
-	)
-
-	assert.NoError(t, err, "Failed to create subscription")
+	subscriptionsCount := 0
+	for _, user := range users {
+		subscriptionsPerUser := rand.Intn(3) + 1
+		_, err = factory.CreateAndInsertSubscriptions(ctx, db, subscriptionsPerUser,
+			factory.SubscriptionWithUser(user),
+			factory.SubscriptionServiceName([]string{"Okko", "Yandex", "Wink", "Sber", "Ivi"}[rand.Intn(5)]),
+			factory.SubscriptionPrice([]int{10, 20, 30, 40, 50}[rand.Intn(5)]),
+		)
+		assert.NoError(t, err, "Failed to create subscriptions for user %d", user.ID)
+		subscriptionsCount += subscriptionsPerUser
+	}
 
 	req, err := http.NewRequest(http.MethodGet, "/subscriptions", nil)
 	assert.NoError(t, err, "Failed to create request")
@@ -66,11 +70,12 @@ func TestGetSubscriptions(t *testing.T) {
 
 	assertResponseStructure(t, json)
 
-	subscriptions := json.Get("data.subscriptions")
-	assert.True(t, subscriptions.Exists())
-	assert.True(t, subscriptions.IsArray())
+	subscriptionsJson := json.Get("data.subscriptions")
+	assert.True(t, subscriptionsJson.Exists())
+	assert.True(t, subscriptionsJson.IsArray())
+	assert.Len(t, subscriptionsJson.Array(), subscriptionsCount)
 
-	subscriptions.ForEach(func(_, subscription gjson.Result) bool {
+	subscriptionsJson.ForEach(func(_, subscription gjson.Result) bool {
 		assert.Greater(t, subscription.Get("id").Int(), int64(0))
 		assert.Greater(t, subscription.Get("user_id").Int(), int64(0))
 		assert.NotEmpty(t, subscription.Get("service_name").String())
