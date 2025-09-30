@@ -34,21 +34,17 @@ func (ctrl *SubscriptionController) GetSubscriptions(c *gin.Context) {
 // Subscribe user
 func (ctrl *SubscriptionController) CreateSubscription(c *gin.Context) {
 
-	var input struct {
-		UserID      int    `json:"user_id" binding:"required,gt=1"`
-		ServiceName string `json:"service_name" binding:"required"`
-		Price       int    `json:"price" binding:"required,gt=1"`
-	}
+	var request requests.CreateSubscriptionRequest
 
-	if err := c.ShouldBindJSON(&input); err != nil {
+	if err := c.ShouldBindJSON(&request); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
 	subscription := models.Subscription{
-		UserID:      input.UserID,
-		ServiceName: input.ServiceName,
-		Price:       input.Price,
+		UserID:      request.UserID,
+		ServiceName: request.ServiceName,
+		Price:       request.Price,
 	}
 
 	err := subscription.Insert(c.Request.Context(), boil.GetContextDB(), boil.Infer())
