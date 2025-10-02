@@ -71,6 +71,11 @@ func (ctrl *SubscriptionController) ReadSubscription(c *gin.Context) {
 
 	subscription, err := models.FindSubscription(context.Background(), boil.GetContextDB(), request.ID)
 
+	if subscription == nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		return
+	}
+
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
