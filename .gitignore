@@ -3,6 +3,7 @@
 #
 # Application stuff
 sqlboiler.toml
+target/
 
 # Binaries for programs and plugins
 *.exe

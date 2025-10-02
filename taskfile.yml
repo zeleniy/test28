@@ -43,6 +43,19 @@ tasks:
     cmds:
       - docker compose exec -it app sh
 
+  app:compile:
+    desc: "Compile application"
+    aliases: [compile]
+    cmds:
+      - go build -o target/server cmd/server/main.go
+
+  app:build:
+    desc: "Build application"
+    deps: [app:test]
+    aliases: [build]
+    cmds:
+      - go build -o target/server cmd/server/main.go
+
   app:test:
     desc: "Run application test"
     deps: [migrate:test:fresh]
