@@ -212,6 +212,32 @@ func TestUpdateSubscription(t *testing.T) {
 	assert.Equal(t, http.StatusMethodNotAllowed, w.Code, "Expected status code %d, got %d", http.StatusMethodNotAllowed, w.Code)
 }
 
+func TestDeleteSubscription(t *testing.T) {
+
+	user, err := factory.CreateAndInsertUser(ctx, db,
+		factory.UserLogin(faker.Username()),
+		factory.UserPasswordHash(faker.Password()),
+	)
+
+	assert.NoError(t, err, "Failed to create user")
+
+	subscription, err := factory.CreateAndInsertSubscription(ctx, db,
+		factory.SubscriptionUserID(user.ID),
+		factory.SubscriptionServiceName("Ivi"),
+		factory.SubscriptionPrice(100),
+	)
+
+	assert.NoError(t, err, "Failed to create subscription")
+
+	req, err := http.NewRequest(http.MethodDelete, "/subscriptions/"+strconv.Itoa(subscription.ID), nil)
+	assert.NoError(t, err, "Failed to create request")
+
+	w := httptest.NewRecorder()
+	ginEngine.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusNoContent, w.Code, "Expected status code %d, got %d", http.StatusNoContent, w.Code)
+}
+
 func assertResponseStructure(t *testing.T, json gjson.Result) {
 
 	assert.True(t, json.Get("data").Exists(), "Response does not contain 'data' key")

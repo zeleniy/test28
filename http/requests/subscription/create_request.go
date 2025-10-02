@@ -1,4 +1,4 @@
-package requests
+package subscription
 
 type CreateSubscriptionRequest struct {
 	UserID      int    `json:"user_id" binding:"required,gt=0"`

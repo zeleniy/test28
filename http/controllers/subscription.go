@@ -1,17 +1,14 @@
 package controllers
 
 import (
-
-	// "time"
-
 	"context"
 	"net/http"
 
 	"github.com/aarondl/sqlboiler/v4/boil"
-	requests "github.com/zeleniy/test28/http/requests/subscription"
-	"github.com/zeleniy/test28/models"
-
 	"github.com/gin-gonic/gin"
+	"github.com/zeleniy/test28/http/requests"
+	"github.com/zeleniy/test28/http/requests/subscription"
+	"github.com/zeleniy/test28/models"
 )
 
 type SubscriptionController struct{}
@@ -34,7 +31,7 @@ func (ctrl *SubscriptionController) GetSubscriptions(c *gin.Context) {
 // Subscribe user
 func (ctrl *SubscriptionController) CreateSubscription(c *gin.Context) {
 
-	var request requests.CreateSubscriptionRequest
+	var request subscription.CreateSubscriptionRequest
 
 	if err := c.ShouldBindJSON(&request); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -62,7 +59,7 @@ func (ctrl *SubscriptionController) CreateSubscription(c *gin.Context) {
 // Get user's subscription info
 func (ctrl *SubscriptionController) ReadSubscription(c *gin.Context) {
 
-	var request requests.ReadSubscriptionRequest
+	var request requests.IdRequest
 
 	if err := c.ShouldBindUri(&request); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -90,4 +87,25 @@ func (ctrl *SubscriptionController) ReadSubscription(c *gin.Context) {
 func (ctrl *SubscriptionController) UpdateSubscription(c *gin.Context) {
 
 	c.AbortWithStatus(405)
+}
+
+// Cancel subscription
+func (ctrl *SubscriptionController) DeleteSubscription(c *gin.Context) {
+
+	var request requests.IdRequest
+
+	if err := c.ShouldBindUri(&request); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	_, err := models.Subscriptions(models.SubscriptionWhere.ID.EQ(request.ID)).
+		DeleteAll(context.Background(), boil.GetContextDB())
+
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.Status(http.StatusNoContent)
 }

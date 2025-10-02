@@ -20,4 +20,5 @@ func SetupRoutes(r *gin.Engine) {
 	r.GET("/subscriptions/:id", subscriptionCtrl.ReadSubscription)
 	r.PATCH("/subscriptions/:id", subscriptionCtrl.UpdateSubscription)
 	r.PUT("/subscriptions/:id", subscriptionCtrl.UpdateSubscription)
+	r.DELETE("/subscriptions/:id", subscriptionCtrl.DeleteSubscription)
 }

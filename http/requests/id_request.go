@@ -1,5 +1,5 @@
 package requests
 
-type ReadSubscriptionRequest struct {
+type IdRequest struct {
 	ID int `uri:"id" binding:"required,gt=0"`
 }
