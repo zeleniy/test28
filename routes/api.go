@@ -18,4 +18,6 @@ func SetupRoutes(r *gin.Engine) {
 	r.GET("/subscriptions", subscriptionCtrl.GetSubscriptions)
 	r.POST("/subscriptions", subscriptionCtrl.CreateSubscription)
 	r.GET("/subscriptions/:id", subscriptionCtrl.ReadSubscription)
+	r.PATCH("/subscriptions/:id", subscriptionCtrl.UpdateSubscription)
+	r.PUT("/subscriptions/:id", subscriptionCtrl.UpdateSubscription)
 }

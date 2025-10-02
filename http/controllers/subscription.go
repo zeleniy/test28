@@ -80,3 +80,9 @@ func (ctrl *SubscriptionController) ReadSubscription(c *gin.Context) {
 		"subscription": subscription,
 	})
 }
+
+// Update user's subscription details
+func (ctrl *SubscriptionController) UpdateSubscription(c *gin.Context) {
+
+	c.AbortWithStatus(405)
+}

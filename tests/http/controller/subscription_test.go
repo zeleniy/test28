@@ -184,6 +184,34 @@ func TestReadSubscription(t *testing.T) {
 	assert.IsType(t, "", subscriptionJson.Get("created_at").Value())
 }
 
+func TestUpdateSubscription(t *testing.T) {
+
+	user, err := factory.CreateAndInsertUser(ctx, db,
+		factory.UserLogin(faker.Username()),
+		factory.UserPasswordHash(faker.Password()),
+	)
+
+	assert.NoError(t, err, "Failed to create user")
+
+	subscription, err := factory.CreateAndInsertSubscription(ctx, db,
+		factory.SubscriptionUserID(user.ID),
+		factory.SubscriptionServiceName("Ivi"),
+		factory.SubscriptionPrice(100),
+	)
+
+	assert.NoError(t, err, "Failed to create subscription")
+
+	httMethod := []string{http.MethodPatch, http.MethodPut}[rand.Intn(2)]
+	req, err := http.NewRequest(httMethod, "/subscriptions/"+strconv.Itoa(subscription.ID), nil)
+
+	assert.NoError(t, err, "Failed to create request")
+
+	w := httptest.NewRecorder()
+	ginEngine.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusMethodNotAllowed, w.Code, "Expected status code %d, got %d", http.StatusMethodNotAllowed, w.Code)
+}
+
 func assertResponseStructure(t *testing.T, json gjson.Result) {
 
 	assert.True(t, json.Get("data").Exists(), "Response does not contain 'data' key")
