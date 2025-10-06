@@ -7,19 +7,21 @@ import (
 	"github.com/zeleniy/test28/http/controllers"
 )
 
-func SetupRoutes(r *gin.Engine) {
+func SetupRoutes(ginEngine *gin.Engine) {
 
 	subscriptionCtrl := &controllers.SubscriptionController{}
 
-	r.GET("/ping", func(c *gin.Context) {
-		c.String(http.StatusOK, "pong")
+	ginEngine.GET("/ping", func(ginContext *gin.Context) {
+		ginContext.String(http.StatusOK, "pong")
 	})
 
-	r.GET("/subscriptions", subscriptionCtrl.GetSubscriptions)
-	r.POST("/subscriptions", subscriptionCtrl.CreateSubscription)
-	r.GET("/subscriptions/:id", subscriptionCtrl.ReadSubscription)
-	r.PATCH("/subscriptions/:id", subscriptionCtrl.UpdateSubscription)
-	r.PUT("/subscriptions/:id", subscriptionCtrl.UpdateSubscription)
-	r.DELETE("/subscriptions/:id", subscriptionCtrl.DeleteSubscription)
-	r.POST("/subscriptions/report", subscriptionCtrl.GetAccountingReport)
+	subscriptions := ginEngine.Group("/subscriptions")
+
+	subscriptions.GET("", subscriptionCtrl.GetSubscriptions)
+	subscriptions.POST("", subscriptionCtrl.CreateSubscription)
+	subscriptions.GET("/:id", subscriptionCtrl.ReadSubscription)
+	subscriptions.PATCH("/:id", subscriptionCtrl.UpdateSubscription)
+	subscriptions.PUT("/:id", subscriptionCtrl.UpdateSubscription)
+	subscriptions.DELETE("/:id", subscriptionCtrl.DeleteSubscription)
+	subscriptions.POST("/report", subscriptionCtrl.GetAccountingReport)
 }
