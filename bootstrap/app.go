@@ -7,6 +7,7 @@ import (
 
 func SetUpApp(ginMode string, dsn string) *gin.Engine {
 
+	SetUpGoPlayground()
 	_, err := SetUpDb(dsn)
 
 	if err != nil {
