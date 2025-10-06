@@ -12,6 +12,7 @@ func SetupRoutes(ginEngine *gin.Engine) {
 	subscriptionCtrl := &controllers.SubscriptionController{}
 
 	ginEngine.GET("/ping", func(ginContext *gin.Context) {
+		ginContext.Header("Content-Type", "text/plain")
 		ginContext.String(http.StatusOK, "pong")
 	})
 
