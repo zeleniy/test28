@@ -35,4 +35,86 @@
 >   "user_id": "60601fee-2bf1-4721-ae6f-7636e79a0cba",
 >   "start_date": "07-2025"
 > }
-```
+> ```
+
+# Установка
+
+1. Выкачать проект из репозитория и перейти в папку с проектом.
+1. Скопировать `.env.development` в `.env`:
+    ```
+    cp .env.development .env
+    ```
+1. Установить [task](https://taskfile.dev/docs/installation) (все манипуляции с приложением производятся через [go-task/task](https://github.com/go-task/task)).
+1. Запустить docker:
+    ```
+    task up
+    ```
+1. Зайти в контейнер приложения:
+    ```
+    task sh
+    ```
+1. Накатить миграции:
+    ```
+    task migrate:test:up
+    ```
+1. Запустить тесты:
+    ```
+    task test
+    ```
+
+### Использование
+
+1. Накатить миграции:
+    ```
+    task migrate:up
+    ```
+1. Засеять БД данными:
+    ```
+    task db:seed
+    ```
+1. Сделать ping-запрос к сервису:
+    ```
+    curl --location 'http://127.0.0.1:8080/ping'
+    ```
+1. Получить статистику по всем подпискам можно так:
+    ```
+    curl --location 'http://127.0.0.1:8080/subscriptions/report' --header 'Content-Type: application/json' --data '{"user_id": 1,"service_name": "Ivi","from_date": "10-01-1991","to_date": "12-11-2035"}'
+    ```
+1. По юзеру так:
+    ```
+    curl --location 'http://127.0.0.1:8080/subscriptions/report' --header 'Content-Type: application/json' --data '{"user_id": 1}'
+    ```
+1. По сервису:
+    ```
+    curl --location 'http://127.0.0.1:8080/subscriptions/report' --header 'Content-Type: application/json' --data '{"service_name": "Ivi"}'
+    ```
+
+### Что и как сделано?
+
+* Реализовано всё требуемое API на базе фреймворка [Gin](https://github.com/gin-gonic/gin).
+* Для миграций БД используется библиотека [golang-migrate/migrate](https://github.com/golang-migrate/migrate).
+* Взаимодействие с БД осуществляется через ORM [aarondl/sqlboiler](https://github.com/aarondl/sqlboiler). Эта ORM была выбрана за возможность кодогенерации моделей (да, я люблю кодогенерацию и [описал как это делается в Laravel в этой  статье](https://habr.com/ru/articles/861584/)).
+* Так же плагин к этой либе - [stephenafamo/boilingseed](https://github.com/stephenafamo/boilingseed) - поддерживает кодогенерацию сидеров, которые используется для засеивания БД данными: `task db:seed`.
+* Тесты покрывают всё разработанное API. Для тестирования используется библиотека [stretchr/testify](https://github.com/stretchr/testify).
+  * Добавлена возможность запускать тесты через [gotestyourself/gotestsum](https://github.com/gotestyourself/gotestsum): `task app:testsum`.
+  * Тесты запускаются в рамках транзакций, что позволяет не чистить БД при каждом последующем запуске. Очистить тестувую базу в случае необходимотси можно так: `task db:test:wipe`.
+  * Для генерации тестовых данных используется другой плагин SQLBoiler'а - [stephenafamo/boilingfactory](https://github.com/stephenafamo/boilingfactory), который генерирует код фабрик.
+  * Фабрики (и сидеры) используют [go-faker/faker](https://github.com/go-faker/faker) для генерации логинов, паролей и пр.
+  * Для разбора ответов от сервера в коде тестов используется библиотека [tidwall/gjson](https://github.com/tidwall/gjson).
+* Для валидации входных данных Gin использует [go-playground/validator](https://github.com/go-playground/validator). В файле [bootstrap/go_playground.go](/bootstrap/go_playground.go) можно найти ряд кастомных валидаторов для нужд приложения.
+* Приложение по большому счёту имеет архитектуру типа [Transaction Script](https://martinfowler.com/eaaCatalog/transactionScript.html): ни слоя сервисов, ни слоя репозиториев в приложении нет т.к. туда фактически нечего выносить.
+* Формат сообщений для коммитов соответствует [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/).
+
+### Что не сделано или сделано криво?
+
+Прежде чем писать про кривизну я хотел бы подчеркнуть тот факт, что это моё первое web-приложение написанное на Go и чуть ли не первая программа написанная на этом языке, не считая [решений задачек на LeetCode](https://leetcode.com/u/aleksandr-s-zelenin/). В этом новом и чудном мире я обнаружил, что в Go нет много того, к чему я привык в мире PHP ([см. сюда](https://github.com/zeleniy/test29)). Поэтому я пытался затащить сюда всё, что могло бы напоминать мне опыт с [Laravel](https://laravel.com/): кодогенерация, ORM, фабрики, сидеры, faker, task мимикрирующий возможности artisan'а и т.п. А теперь к списку:
+
+* Нет логов.
+* Нет swagger-файла. Да, я знаю что это такое, как им пользоваться и успешно и писал и генерил в рамках PHP'ных проектов.
+* В качестве идентификатора пользователя используется INT, а не UUID.
+* База не нормализована. По хорошему в ней должны быть таблица-справочник с подписками (и возможно другие), но такой нет.
+* При подписке баланс и период действия уже имеющейся подписки не проверяются.
+* Структура папок проекта хаотичная, просто хочу уже покончить с этим приложением (нет предела красоты (и кривизны)). Да, я знаю, про [golang-standards/project-layout](https://github.com/golang-standards/project-layout) и где-то пытался следовать этому стандарту. Где-то пытался следовать структуре проекта Laravel.
+* Ещё точно есть косяки, но я их подзабыл. Возможно когда-нибудь это будет исправлено, но скорее нет.
+
+В конце концов я решил, что пусть этим тестовым заданием я продемонстрирую уровень владения языком Go, а не дотошность с которой я готов выполнять никому не нужное тестовое задание, которое возможно никто никогда даже не посмотрит :)
