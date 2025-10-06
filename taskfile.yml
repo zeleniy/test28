@@ -172,8 +172,12 @@ tasks:
 
   migrate:test:fresh:
     desc: "Drop all tables and re-run all migrations"
-    deps: [db:test:wipe, migrate:test:up]
+    cmds:
+      - task: db:test:wipe
+      - task: migrate:test:up
 
   migrate:test:refresh:
     desc: "Reset and re-run all migrations"
-    deps: [db:test:down, migrate:test:up]
+    cmds:
+      - task: db:test:down
+      - task: migrate:test:up
