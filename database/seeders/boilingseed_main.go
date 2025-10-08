@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/aarondl/sqlboiler/v4/boil"
-	models "github.com/zeleniy/test28/models"
+	models "github.com/zeleniy/test28/internal/models"
 )
 
 type Seeder struct {

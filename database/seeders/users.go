@@ -13,7 +13,7 @@ import (
 	"github.com/aarondl/randomize"
 	"github.com/aarondl/sqlboiler/v4/boil"
 	"github.com/aarondl/sqlboiler/v4/queries"
-	models "github.com/zeleniy/test28/models"
+	models "github.com/zeleniy/test28/internal/models"
 )
 
 var (

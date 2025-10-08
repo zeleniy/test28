@@ -11,7 +11,7 @@ import (
 	"github.com/go-faker/faker/v4"
 	"github.com/zeleniy/test28/bootstrap"
 	"github.com/zeleniy/test28/database/seeders"
-	"github.com/zeleniy/test28/models"
+	"github.com/zeleniy/test28/internal/models"
 )
 
 func main() {

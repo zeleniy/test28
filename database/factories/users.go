@@ -11,7 +11,7 @@ import (
 
 	"github.com/aarondl/sqlboiler/v4/boil"
 	"github.com/aarondl/sqlboiler/v4/queries"
-	models "github.com/zeleniy/test28/models"
+	models "github.com/zeleniy/test28/internal/models"
 )
 
 // This is to force strconv to be used. Without it, it causes an error because strconv is imported by ALL the drivers

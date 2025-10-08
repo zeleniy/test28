@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/zeleniy/test28/http/controllers"
+	"github.com/zeleniy/test28/internal/http/controllers"
 )
 
 func SetupRoutes(ginEngine *gin.Engine) {

@@ -107,13 +107,13 @@ tasks:
     desc: "Generate SQLBoiler factories"
     deps: [boiler:config]
     cmds:
-      - boilingfactory psql --sqlboiler-models github.com/zeleniy/test28/models --output database/factories --wipe
+      - boilingfactory psql --sqlboiler-models github.com/zeleniy/test28/internal/models --output database/factories --wipe
 
   boiler:seeders:
     desc: "Generate SQLBoiler factories"
     deps: [boiler:config]
     cmds:
-      - boilingseed psql --sqlboiler-models github.com/zeleniy/test28/models --pkgname seeders --output database/seeders --wipe
+      - boilingseed psql --sqlboiler-models github.com/zeleniy/test28/internal/models --pkgname seeders --output database/seeders --wipe
 
   boiler:code:
     desc: "Generate ORM entities"

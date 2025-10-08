@@ -8,8 +8,8 @@ import (
 	"github.com/aarondl/sqlboiler/v4/boil"
 	"github.com/aarondl/sqlboiler/v4/queries/qm"
 	"github.com/gin-gonic/gin"
-	"github.com/zeleniy/test28/http/requests"
-	"github.com/zeleniy/test28/http/requests/subscription"
+	"github.com/zeleniy/test28/internal/http/requests"
+	"github.com/zeleniy/test28/internal/http/requests/subscription"
 	"github.com/zeleniy/test28/models"
 )
 

@@ -2,7 +2,7 @@ package bootstrap
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/zeleniy/test28/http/middleware"
+	"github.com/zeleniy/test28/internal/http/middleware"
 	"github.com/zeleniy/test28/routes"
 )
 
