@@ -10,7 +10,7 @@ import (
 	"github.com/aarondl/sqlboiler/v4/boil"
 	"github.com/go-faker/faker/v4"
 	"github.com/zeleniy/test28/bootstrap"
-	"github.com/zeleniy/test28/database/seeds"
+	"github.com/zeleniy/test28/database/seeders"
 	"github.com/zeleniy/test28/models"
 )
 
@@ -18,7 +18,7 @@ func main() {
 
 	bootstrap.SetUpDb(os.Getenv("DB_URL"))
 
-	seeder := &seeds.Seeder{}
+	seeder := &seeders.Seeder{}
 	seeder.MinSubscriptionsToSeed = 15
 	seeder.MinUsersToSeed = 10
 
