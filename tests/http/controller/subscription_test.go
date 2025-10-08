@@ -18,7 +18,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/tidwall/gjson"
 	"github.com/zeleniy/test28/bootstrap"
-	"github.com/zeleniy/test28/factory"
+	factory "github.com/zeleniy/test28/database/factories"
 )
 
 var (

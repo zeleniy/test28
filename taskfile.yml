@@ -107,7 +107,7 @@ tasks:
     desc: "Generate SQLBoiler factories"
     deps: [boiler:config]
     cmds:
-      - boilingfactory psql --sqlboiler-models github.com/zeleniy/test28/models --output factory --wipe
+      - boilingfactory psql --sqlboiler-models github.com/zeleniy/test28/models --output database/factories --wipe
 
   boiler:seeders:
     desc: "Generate SQLBoiler factories"
