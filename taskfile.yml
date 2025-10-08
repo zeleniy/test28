@@ -4,7 +4,7 @@ version: '3'
 
 vars:
   GREETING: Hello, World!
-  MIGRATIONS_PATH: db/migrations
+  MIGRATIONS_PATH: database/migrations
 
 dotenv: ['.env']
 
@@ -179,5 +179,5 @@ tasks:
   migrate:test:refresh:
     desc: "Reset and re-run all migrations"
     cmds:
-      - task: db:test:down
+      - task: migrate:test:down
       - task: migrate:test:up
