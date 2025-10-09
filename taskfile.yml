@@ -101,7 +101,7 @@ tasks:
     desc: "Generate SQLBoiler models"
     deps: [boiler:config]
     cmds:
-      - sqlboiler psql
+      - sqlboiler psql --output internal/models
 
   boiler:factories:
     desc: "Generate SQLBoiler factories"

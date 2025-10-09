@@ -17,8 +17,8 @@ import (
 )
 
 var (
-	userColumnsWithDefault = []string{"id", "created_at"}
-	userDBTypes            = map[string]string{`ID`: `integer`, `Login`: `character varying`, `PasswordHash`: `character`, `CreatedAt`: `timestamp with time zone`}
+	userColumnsWithDefault = []string{"id", "created_at", "uuid"}
+	userDBTypes            = map[string]string{`ID`: `integer`, `Login`: `character varying`, `PasswordHash`: `character`, `CreatedAt`: `timestamp with time zone`, `UUID`: `uuid`}
 )
 
 // defaultRandomUser creates a random model.User
@@ -78,4 +78,5 @@ type user struct {
 	Login        string
 	PasswordHash string
 	CreatedAt    time.Time
+	UUID         string
 }

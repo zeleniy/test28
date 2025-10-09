@@ -237,6 +237,21 @@ func UserCreatedAtFunc(f func() (time.Time, error)) UserMod {
 	})
 }
 
+func UserUUID(val string) UserMod {
+	return UserModFunc(func(o *models.User) error {
+		o.UUID = val
+		return nil
+	})
+}
+
+func UserUUIDFunc(f func() (string, error)) UserMod {
+	return UserModFunc(func(o *models.User) error {
+		var err error
+		o.UUID, err = f()
+		return err
+	})
+}
+
 func UserWithSubscriptions(related models.SubscriptionSlice) UserMod {
 	return UserModFunc(func(o *models.User) error {
 		if o.R == nil {
