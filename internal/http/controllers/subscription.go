@@ -3,14 +3,17 @@ package controllers
 import (
 	"context"
 	"net/http"
+	"os"
 	"time"
 
+	"github.com/aarondl/null/v8"
 	"github.com/aarondl/sqlboiler/v4/boil"
 	"github.com/aarondl/sqlboiler/v4/queries/qm"
 	"github.com/gin-gonic/gin"
-	"github.com/zeleniy/test28/internal/http/requests"
-	"github.com/zeleniy/test28/internal/http/requests/subscription"
-	"github.com/zeleniy/test28/models"
+	"github.com/zeleniy/test28/internal/http/request"
+	subscription_request "github.com/zeleniy/test28/internal/http/request/subscription"
+	subscription_response "github.com/zeleniy/test28/internal/http/response/subscription"
+	"github.com/zeleniy/test28/internal/models"
 )
 
 type SubscriptionController struct{}
@@ -21,7 +24,13 @@ func (ctrl *SubscriptionController) GetSubscriptions(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
 	defer cancel()
 
-	subscriptions, err := models.Subscriptions().All(ctx, boil.GetContextDB())
+	var subscriptions []subscription_response.UserSubscription
+
+	err := models.NewQuery(
+		qm.Select("service_name", "price", "uuid", "start_date"),
+		qm.From("subscriptions"),
+		qm.InnerJoin("users on subscriptions.user_id = users.id"),
+	).Bind(ctx, boil.GetContextDB(), &subscriptions)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -36,47 +45,63 @@ func (ctrl *SubscriptionController) GetSubscriptions(c *gin.Context) {
 // Subscribe user
 func (ctrl *SubscriptionController) CreateSubscription(c *gin.Context) {
 
-	var request subscription.CreateRequest
+	var request subscription_request.CreateRequest
 
 	if err := c.ShouldBindJSON(&request); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
+	user, err := models.Users(qm.Where("uuid=?", request.UserUUID)).One(c.Request.Context(), boil.GetContextDB())
+
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		return
+	}
+
 	subscription := models.Subscription{
-		UserID:      request.UserID,
+		UserID:      user.ID,
 		ServiceName: request.ServiceName,
 		Price:       request.Price,
 	}
 
-	err := subscription.Insert(c.Request.Context(), boil.GetContextDB(), boil.Infer())
+	err = subscription.Insert(c.Request.Context(), boil.GetContextDB(), boil.Infer())
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
+	userSubscription := subscription_response.UserSubscription{
+		ServiceName: subscription.ServiceName,
+		Price:       subscription.Price,
+		UserUUID:    user.UUID,
+		StartDate:   subscription.StartDate,
+	}
+
 	c.Set("data", map[string]interface{}{
-		"subscription": subscription,
+		"subscription": userSubscription,
 	})
 }
 
 // Get user's subscription info
 func (ctrl *SubscriptionController) ReadSubscription(c *gin.Context) {
 
-	var request requests.IdRequest
+	var request request.IdRequest
 
 	if err := c.ShouldBindUri(&request); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	subscription, err := models.FindSubscription(context.Background(), boil.GetContextDB(), request.ID)
+	var subscription subscription_response.UserSubscription
 
-	if subscription == nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
-		return
-	}
+	err := models.NewQuery(
+		qm.Select("service_name", "price", "uuid", "start_date"),
+		qm.From("subscriptions"),
+		qm.InnerJoin("users on subscriptions.user_id = users.id"),
+		qm.Where("subscriptions.id = ?", request.ID),
+	).Bind(context.Background(), boil.GetContextDB(), &subscription)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -97,7 +122,7 @@ func (ctrl *SubscriptionController) UpdateSubscription(c *gin.Context) {
 // Cancel subscription
 func (ctrl *SubscriptionController) DeleteSubscription(c *gin.Context) {
 
-	var request requests.IdRequest
+	var request request.IdRequest
 
 	if err := c.ShouldBindUri(&request); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -117,8 +142,10 @@ func (ctrl *SubscriptionController) DeleteSubscription(c *gin.Context) {
 
 // Get accounting report
 func (ctrl *SubscriptionController) GetAccountingReport(c *gin.Context) {
+	boil.DebugMode = true
+	boil.DebugWriter = os.Stdout // или твой логгер
 
-	var request subscription.ReportRequest
+	var request subscription_request.ReportRequest
 
 	if err := c.ShouldBindJSON(&request); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -155,7 +182,7 @@ func (ctrl *SubscriptionController) GetAccountingReport(c *gin.Context) {
 	})
 }
 
-func getGetAccountingReportCriteria(request subscription.ReportRequest, c *gin.Context) ([]qm.QueryMod, error) {
+func getGetAccountingReportCriteria(request subscription_request.ReportRequest, c *gin.Context) ([]qm.QueryMod, error) {
 
 	var mods []qm.QueryMod
 
@@ -171,12 +198,12 @@ func getGetAccountingReportCriteria(request subscription.ReportRequest, c *gin.C
 		if toDate, err := time.Parse("02-01-2006", *request.To); err != nil {
 			return nil, err
 		} else {
-			mods = append(mods, models.SubscriptionWhere.StartDate.GTE(toDate))
+			mods = append(mods, models.SubscriptionWhere.EndDate.LTE(null.TimeFrom(toDate)))
 		}
 	}
 
-	if request.UserID != nil {
-		mods = append(mods, models.SubscriptionWhere.UserID.EQ(*request.UserID))
+	if request.UserUUID != nil {
+		mods = append(mods, models.UserWhere.UUID.EQ(*request.UserUUID), qm.InnerJoin("users on subscriptions.user_id = users.id"))
 	}
 
 	if request.ServiceName != nil {

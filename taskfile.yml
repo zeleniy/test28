@@ -61,14 +61,14 @@ tasks:
     deps: [migrate:test:fresh]
     aliases: [test]
     cmds:
-      - go test ./models/ ./tests/... {{.CLI_ARGS}}
+      - go test ./internal/models/ ./tests/... {{.CLI_ARGS}}
 
   app:testsum:
     desc: "Run application test"
     deps: [migrate:test:fresh]
     aliases: [testsum]
     cmds:
-      - gotestsum ./models/ ./tests/... {{.CLI_ARGS}}
+      - gotestsum ./internal/models/ ./tests/... {{.CLI_ARGS}}
 
   pg:sh:
     desc: "Run PostreSQL shell"
@@ -83,7 +83,6 @@ tasks:
       - |
         cat > sqlboiler.toml << EOF
         output   = "models"
-        wipe     = true
         no-tests = false
         add-enum-types = true
 

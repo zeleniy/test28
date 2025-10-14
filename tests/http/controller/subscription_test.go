@@ -79,14 +79,12 @@ func TestGetSubscriptions(t *testing.T) {
 		assert.True(t, gjsonSubscriptions.IsArray())
 		assert.Len(t, gjsonSubscriptions.Array(), subscriptionsCount)
 
-		gjsonSubscriptions.ForEach(func(_, subscription gjson.Result) bool {
-			assert.Greater(t, subscription.Get("id").Int(), int64(0))
-			assert.Greater(t, subscription.Get("user_id").Int(), int64(0))
-			assert.NotEmpty(t, subscription.Get("service_name").String())
-			assert.Greater(t, subscription.Get("price").Int(), int64(0))
-			assert.IsType(t, "", subscription.Get("start_date").Value())
-			assert.Nil(t, subscription.Get("end_date").Value())
-			assert.IsType(t, "", subscription.Get("created_at").Value())
+		gjsonSubscriptions.ForEach(func(_, gjsonSubscription gjson.Result) bool {
+			assert.Len(t, gjsonSubscription.Map(), 4)
+			assert.Len(t, gjsonSubscription.Get("user_id").String(), 36)
+			assert.NotEmpty(t, gjsonSubscription.Get("service_name").String())
+			assert.Greater(t, gjsonSubscription.Get("price").Int(), int64(0))
+			assert.IsType(t, "", gjsonSubscription.Get("start_date").Value())
 			return true
 		})
 	})
@@ -138,7 +136,7 @@ func TestGetAccountingReport(t *testing.T) {
 		assert.NoError(t, err, "Failed to create subscriptions for user %d", user.ID)
 
 		gjsonBody = sendAndTestRequest(t, http.MethodPost, "/subscriptions/report", http.StatusOK, map[string]interface{}{
-			"user_id": user.ID,
+			"user_id": user.UUID,
 		})
 
 		assertResponseStructure(t, gjsonBody)
@@ -146,7 +144,7 @@ func TestGetAccountingReport(t *testing.T) {
 		assert.Equal(t, gjsonBody.Get("data.sum").Int(), int64(10))
 
 		gjsonBody = sendAndTestRequest(t, http.MethodPost, "/subscriptions/report", http.StatusOK, map[string]interface{}{
-			"user_id":      user.ID,
+			"user_id":      user.UUID,
 			"service_name": "Ivi",
 			"to":           "01-01-2025",
 		})
@@ -156,7 +154,7 @@ func TestGetAccountingReport(t *testing.T) {
 		assert.Equal(t, gjsonBody.Get("data.sum").Int(), int64(10))
 
 		gjsonBody = sendAndTestRequest(t, http.MethodPost, "/subscriptions/report", http.StatusOK, map[string]interface{}{
-			"user_id":      user.ID,
+			"user_id":      user.UUID,
 			"service_name": "Okko",
 			"from":         "01-01-1901",
 		})
@@ -179,7 +177,7 @@ func TestCreateSubscription(t *testing.T) {
 		assert.NoError(t, err, "Failed to create user")
 
 		gjsonBody := sendAndTestRequest(t, http.MethodPost, "/subscriptions", http.StatusOK, map[string]interface{}{
-			"user_id":      user.ID,
+			"user_id":      user.UUID,
 			"service_name": "Okko",
 			"price":        100,
 		})
@@ -187,14 +185,11 @@ func TestCreateSubscription(t *testing.T) {
 		assertResponseStructure(t, gjsonBody)
 		gjsonSubscription := gjsonBody.Get("data.subscription")
 		assert.True(t, gjsonSubscription.Exists(), "Response does not contain 'data.subscription' key")
-
-		assert.Greater(t, gjsonSubscription.Get("id").Int(), int64(0))
-		assert.Equal(t, gjsonSubscription.Get("user_id").Int(), int64(user.ID))
-		assert.Equal(t, gjsonSubscription.Get("service_name").String(), "Okko")
-		assert.Equal(t, gjsonSubscription.Get("price").Int(), int64(100))
+		assert.Len(t, gjsonSubscription.Map(), 4)
+		assert.Equal(t, user.UUID, gjsonSubscription.Get("user_id").String())
+		assert.Equal(t, "Okko", gjsonSubscription.Get("service_name").String())
+		assert.Equal(t, int64(100), gjsonSubscription.Get("price").Int())
 		assert.IsType(t, "", gjsonSubscription.Get("start_date").Value())
-		assert.Nil(t, gjsonSubscription.Get("end_date").Value())
-		assert.IsType(t, "", gjsonSubscription.Get("created_at").Value())
 	})
 }
 
@@ -223,13 +218,11 @@ func TestReadSubscription(t *testing.T) {
 		gjsonSubscription := gjsonBody.Get("data.subscription")
 		assert.True(t, gjsonSubscription.Exists())
 		assert.True(t, gjsonSubscription.IsObject())
-		assert.Equal(t, int64(subscription.ID), gjsonSubscription.Get("id").Int())
-		assert.Equal(t, int64(subscription.UserID), gjsonSubscription.Get("user_id").Int())
+		assert.Len(t, gjsonSubscription.Map(), 4)
+		assert.Equal(t, user.UUID, gjsonSubscription.Get("user_id").String())
 		assert.Equal(t, "Ivi", gjsonSubscription.Get("service_name").Value())
 		assert.Equal(t, int64(100), gjsonSubscription.Get("price").Int())
 		assert.IsType(t, "", gjsonSubscription.Get("start_date").Value())
-		assert.Nil(t, gjsonSubscription.Get("end_date").Value())
-		assert.IsType(t, "", gjsonSubscription.Get("created_at").Value())
 	})
 }
 
