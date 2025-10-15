@@ -33,9 +33,15 @@ tasks:
 
   docker:up:
     desc: "Run docker compose fleet"
-    aliases: [up, serve]
+    aliases: [up, start, serve]
     cmds:
       - docker compose up {{.CLI_ARGS}}
+
+  docker:down:
+    desc: "Stop docker compose fleet"
+    aliases: [down, stop]
+    cmds:
+      - docker compose down {{.CLI_ARGS}}
 
   app:sh:
     desc: "Run application server shell"
