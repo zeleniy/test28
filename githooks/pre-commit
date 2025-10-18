@@ -1,0 +1,72 @@
+#
+# Colors and font styles.
+#
+GREEN="\e[32m"
+RED="\e[31m"
+BOLD="\e[1m"
+RESET="\e[0m"
+GREEN_BG="\e[42m"
+RED_BG="\e[41m"
+
+#
+# Print error.
+#
+function error_exit {
+    printf "${RED_BG}${BOLD}\n\n BUILD FAILURE: $1\n${RESET}\n"
+    exit 1
+}
+
+#
+# Counters.
+#
+current_step=1
+total_steps=4
+
+#
+# Print phase header.
+#
+function print_header {
+
+    printf "${current_step}/${total_steps}. $1\n\n"
+    current_step=$((current_step + 1))
+}
+
+#
+# gofmt
+#
+tool="gofmt"
+print_header "$tool"
+unformatted_files=$(task go:fmt)
+if [ -n "$unformatted_files" ]; then
+    echo "$unformatted_files"
+    error_exit "$tool"
+fi
+printf "${GREEN}✔${RESET} $tool\n\n"
+
+#
+# go vet
+#
+tool="go vet"
+print_header "$tool"
+task go:vet || error_exit "$tool"
+printf "${GREEN}✔${RESET} $tool\n\n"
+
+#
+# staticcheck
+#
+tool="staticcheck"
+print_header "$tool"
+staticcheck $(go list ./... | grep -v 'database/factories' | grep -v 'database/seeders') || error_exit "$tool"
+printf "${GREEN}✔${RESET} $tool\n\n"
+
+#
+# go test
+#
+tool="go test"
+print_header "$tool"
+task test || error_exit "$tool"
+printf "${GREEN}✔${RESET} $tool\n\n"
+
+printf "${GREEN_BG}${BOLD}\n\n BUILD SUCCESS\n${RESET}\n"
+
+exit 0

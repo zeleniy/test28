@@ -3,7 +3,6 @@
 version: '3'
 
 vars:
-  GREETING: Hello, World!
   MIGRATIONS_PATH: database/migrations
 
 dotenv: ['.env']
@@ -30,6 +29,8 @@ tasks:
       - echo DB_NAME={{.DB_NAME}}
       - echo DB_URL={{.DB_URL}}
       - echo DB_TEST_URL={{.DB_TEST_URL}}
+      - echo APP_BASE_CMD={{.APP_BASE_CMD}}
+      - echo PG_BASE_CMD={{.PG_BASE_CMD}}
 
   docker:up:
     desc: "Run docker compose fleet"
@@ -43,51 +44,78 @@ tasks:
     cmds:
       - docker compose down {{.CLI_ARGS}}
 
-  app:sh:
-    desc: "Run application server shell"
-    aliases: [sh]
+  go:fmt:
+    desc: "Run gofmt"
+    aliases: [fmt]
     cmds:
-      - docker compose exec -it app sh
+      - |
+        {{.APP_BASE_CMD}} gofmt -d .
 
-  app:compile:
+  go:vet:
+    desc: "Run go vet"
+    aliases: [vet]
+    cmds:
+      - |
+        {{.APP_BASE_CMD}} go vet -all ./...
+
+  go:staticcheck:
+    desc: "Run staticcheck"
+    aliases: [staticcheck]
+    cmds:
+      - |
+        {{.APP_BASE_CMD}} staticcheck $({{.APP_BASE_CMD}} go list ./... | grep -v 'database/factories' | grep -v 'database/seeders')
+
+  go:compile:
     desc: "Compile application"
     aliases: [compile]
     cmds:
-      - go build -o target/server cmd/server/main.go
+      - |
+        {{.APP_BASE_CMD}} go build -o target/server cmd/server/main.go
 
-  app:build:
-    desc: "Build application"
-    deps: [app:test]
-    aliases: [build]
-    cmds:
-      - go build -o target/server cmd/server/main.go
-
-  app:test:
+  go:test:
     desc: "Run application test"
     deps: [migrate:test:fresh]
     aliases: [test]
     cmds:
-      - go test ./internal/models/ ./tests/... {{.CLI_ARGS}}
+      - |
+        {{.APP_BASE_CMD}} go test ./internal/models/ ./tests/... {{.CLI_ARGS}}
 
-  app:testsum:
+  go:testsum:
     desc: "Run application test"
     deps: [migrate:test:fresh]
     aliases: [testsum]
     cmds:
-      - gotestsum ./internal/models/ ./tests/... {{.CLI_ARGS}}
+      - |
+        {{.APP_BASE_CMD}} gotestsum ./internal/models/ ./tests/... {{.CLI_ARGS}}
+
+  app:sh:
+    desc: "Run application server shell"
+    aliases: [sh]
+    cmds:
+      - |
+        {{.APP_BASE_CMD}} sh
+
+  app:build:
+    desc: "Build application"
+    aliases: [build]
+    cmds:
+      - task: go:fmt
+      - task: go:vet
+      - task: go:staticcheck
+      - task: go:test
 
   pg:sh:
     desc: "Run PostreSQL shell"
     aliases: [pg]
     cmds:
-      - docker compose exec -it postgres psql -U postgres
+      - docker compose exec postgres psql -U postgres
 
   boiler:config:
     desc: "Generate SQLBoiler config file"
     silent: true
     cmds:
       - |
-        cat > sqlboiler.toml << EOF
+        {{.APP_BASE_CMD}} cat > sqlboiler.toml << EOF
         output   = "models"
         no-tests = false
         add-enum-types = true
@@ -106,19 +134,22 @@ tasks:
     desc: "Generate SQLBoiler models"
     deps: [boiler:config]
     cmds:
-      - sqlboiler psql --output internal/models
+      - |
+        {{.APP_BASE_CMD}} sqlboiler psql --output internal/models
 
   boiler:factories:
     desc: "Generate SQLBoiler factories"
     deps: [boiler:config]
     cmds:
-      - boilingfactory psql --sqlboiler-models github.com/zeleniy/test28/internal/models --output database/factories --wipe
+      - |
+        {{.APP_BASE_CMD}} boilingfactory psql --sqlboiler-models github.com/zeleniy/test28/internal/models --output database/factories --wipe
 
   boiler:seeders:
     desc: "Generate SQLBoiler factories"
     deps: [boiler:config]
     cmds:
-      - boilingseed psql --sqlboiler-models github.com/zeleniy/test28/internal/models --pkgname seeders --output database/seeders --wipe
+      - |
+        {{.APP_BASE_CMD}} boilingseed psql --sqlboiler-models github.com/zeleniy/test28/internal/models --pkgname seeders --output database/seeders --wipe
 
   boiler:code:
     desc: "Generate ORM entities"
@@ -129,12 +160,14 @@ tasks:
     deps: [boiler:code]
     aliases: [seed]
     cmds:
-      - go run cmd/seed/main.go
+      - |
+        {{.APP_BASE_CMD}} go run cmd/seed/main.go
 
   db:test:wipe:
     desc: "Drop all tables"
     cmds:
-      - psql {{.DB_TEST_URL}} -c "
+      - |
+        {{.APP_BASE_CMD}} psql {{.DB_TEST_URL}} -c "
           DO \$\$ 
           DECLARE 
               r RECORD;
@@ -148,32 +181,38 @@ tasks:
   migrate:up:
     desc: "Apply migrations"
     cmds:
-      - migrate -database '{{.DB_URL}}' -path {{.MIGRATIONS_PATH}} up {{.CLI_ARGS}}
+      - |
+        {{.APP_BASE_CMD}} migrate -database '{{.DB_URL}}' -path {{.MIGRATIONS_PATH}} up {{.CLI_ARGS}}
 
   migrate:down:
     desc: "Rollback migrations" 
     cmds:
-      - migrate -database '{{.DB_URL}}' -path {{.MIGRATIONS_PATH}} down {{.CLI_ARGS}}
+      - |
+        {{.APP_BASE_CMD}} migrate -database '{{.DB_URL}}' -path {{.MIGRATIONS_PATH}} down {{.CLI_ARGS}}
 
   migrate:version:
     desc: "Show current migration version"
     cmds:
-      - migrate -database '{{.DB_URL}}' -path {{.MIGRATIONS_PATH}} version {{.CLI_ARGS}}
+      - |
+        {{.APP_BASE_CMD}} migrate -database '{{.DB_URL}}' -path {{.MIGRATIONS_PATH}} version {{.CLI_ARGS}}
 
   migrate:test:up:
     desc: "Apply migrations"
     cmds:
-      - migrate -database '{{.DB_TEST_URL}}' -path {{.MIGRATIONS_PATH}} up {{.CLI_ARGS}}
+      - |
+        {{.APP_BASE_CMD}} migrate -database '{{.DB_TEST_URL}}' -path {{.MIGRATIONS_PATH}} up {{.CLI_ARGS}}
 
   migrate:test:down:
     desc: "Rollback migrations" 
     cmds:
-      - migrate -database '{{.DB_TEST_URL}}' -path {{.MIGRATIONS_PATH}} down {{.CLI_ARGS}}
+      - |
+        {{.APP_BASE_CMD}} migrate -database '{{.DB_TEST_URL}}' -path {{.MIGRATIONS_PATH}} down {{.CLI_ARGS}}
 
   migrate:test:version:
     desc: "Show current migration version"
     cmds:
-      - migrate -database '{{.DB_TEST_URL}}' -path {{.MIGRATIONS_PATH}} version {{.CLI_ARGS}}
+      - |
+        {{.APP_BASE_CMD}} migrate -database '{{.DB_TEST_URL}}' -path {{.MIGRATIONS_PATH}} version {{.CLI_ARGS}}
 
   migrate:test:fresh:
     desc: "Drop all tables and re-run all migrations"

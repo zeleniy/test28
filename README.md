@@ -45,6 +45,10 @@
     cp .env.development .env
     ```
 1. Установить [task](https://taskfile.dev/docs/installation) (все манипуляции с приложением производятся через [go-task/task](https://github.com/go-task/task)).
+1. Настроить git-хуки:
+    ```
+    git config core.hooksPath git-hooks
+    ```
 1. Запустить docker:
     ```
     task up
@@ -105,6 +109,7 @@
 * Приложение по большому счёту имеет архитектуру типа [Transaction Script](https://martinfowler.com/eaaCatalog/transactionScript.html): ни слоя сервисов, ни слоя репозиториев в приложении нет т.к. туда фактически нечего выносить.
 * Формат сообщений для коммитов соответствует [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/).
 * Структура папок проекта соответствует [golang-standards/project-layout](https://github.com/golang-standards/project-layout). То, что этот ~~не~~стандарт не регламентирует приводилось к стандартам Laravel. Но в целом странно, что Gin не регламентирует структуру папок сам.
+* В качестве hot reloader'а используется [mitranim/gow](https://github.com/mitranim/gow)
 
 ### Что не сделано или сделано криво?
 

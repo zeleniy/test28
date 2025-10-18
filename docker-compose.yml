@@ -7,9 +7,6 @@ services:
       - "8080:8080"
     env_file:
     - .env
-    environment:
-      - DB_URL=postgres://${DB_USER}:${DB_PASS}@${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=disable
-      - DB_TEST_URL=postgres://${DB_USER}:${DB_PASS}@${DB_HOST}:${DB_PORT}/${DB_TEST_NAME}?sslmode=disable
     command: ["gow", "run", "./cmd/server"]
     working_dir: /app
     volumes:

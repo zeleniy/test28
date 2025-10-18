@@ -8,7 +8,8 @@ RUN apk add --no-cache postgresql-client curl && \
     go install github.com/aarondl/sqlboiler/v4/drivers/sqlboiler-psql@latest && \
     go install github.com/stephenafamo/boilingfactory@latest && \
     go install gotest.tools/gotestsum@latest && \
-    go install github.com/stephenafamo/boilingseed@latest
+    go install github.com/stephenafamo/boilingseed@latest && \
+    go install honnef.co/go/tools/cmd/staticcheck@latest
 
 WORKDIR /app
 COPY go.mod go.sum /app

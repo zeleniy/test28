@@ -31,11 +31,7 @@ func validateDate(fl validator.FieldLevel) bool {
 	}
 
 	_, err := time.Parse(layout, value)
-	if err != nil {
-		return false
-	}
-
-	return true
+	return err == nil
 }
 
 // Regex validator
